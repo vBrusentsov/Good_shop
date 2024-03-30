@@ -1,23 +1,32 @@
 const cardContainer = document.querySelector('[data-type=card-container]');
 const ladingOverlay = document.getElementById('loading-overlay');
-// const likeButton = document.querySelector('[data-card-like-button]');
+const cardTamplate = document.querySelector('[data-card-template]');
+ 
 
+let allCards = [];
+let likedStorage = JSON.parse(localStorage.getItem('likedStorage')) || [];
 
 function createCardElement (items) {
-    const templateByAttribute = document.querySelector('[data-card-template]');
-    const cardCopy = document.importNode(templateByAttribute.content, true);
+    const cardCopy = document.importNode(cardTamplate.content, true);
+
+    const isLiked = likedStorage.includes(items.id);
+
     if (items.category.image) {
-        cardCopy.querySelector('[data-card-image]').src = items.category.image;
+        cardCopy.querySelector('[data-card-image]').src = items.image;
     } else {
         cardCopy.querySelector('[data-card-image]').src = 'https://placehold.co/230x230';
     }
     cardCopy.querySelector('[data-card-header]').textContent = items.title;
     const descriptionElement = cardCopy.querySelector('[data-card-description]');
     const likesButtonContainer = cardCopy.getElementById('likes-button-container');
-    const likeButton = document.createElement('button');
-    const likeImage = document.createElement('img');
-    let isLiked;
+    const likeButton = cardCopy.querySelector('[data-card-like-button]');
+    const likeImage = cardCopy.querySelector('[data-card-like-image]');
     
+    cardCopy.querySelector('[data-card-category]').textContent = items.category.name;
+    cardCopy.querySelector('[data-card-price-value]').textContent = '$'+ items.price;
+    
+    likeImage.setAttribute('src', isLiked? '../img/like_image.png': '../img/unlike_image.png');
+
     if (items.description.length > 30) {
         const button = document.createElement('button');
         button.setAttribute('class', 'read-more__button');
@@ -30,45 +39,18 @@ function createCardElement (items) {
     } else {
         descriptionElement.textContent = items.description;
     }
-    
-
-    cardCopy.querySelector('[data-card-category]').textContent = items.category.name;
-    cardCopy.querySelector('[data-card-price-value]').textContent = '$'+ items.price;
-
-    likeButton.setAttribute('class', 'card__button__likes');
-    likeButton.setAttribute('id', 'like-button');
-
-    isLiked = getLikedCardsFromLocalStorage().includes(items.id);
-
-    function toggleLikeImage() {
-        if (isLiked) {
-            likeImage.setAttribute('src', '../img/like_image.png');
-        } else {
-            likeImage.setAttribute('src', '../img/unlike_image.png');
-        }
-    }
-
-    toggleLikeImage();
-
-    likeImage.setAttribute('width', '20px');
-    likeImage.setAttribute('alt', 'Like');
-    likeButton.appendChild(likeImage);
-
 
     likeButton.addEventListener('click', function() {
-        isLiked = !isLiked;
-        if(isLiked) {
-            localStorage.setItem();
+        if (isLiked) {
+            likedStorage = likedStorage.filter((id) => id !== items.id);
         } else {
-            localStorage.removeItem(items.id);
+            likedStorage.push(items.id);
         }
-        
-        console.log(localStorage)
-        toggleLikeImage();
-    });
-
-likesButtonContainer.appendChild(likeButton);
+        localStorage.setItem('likedStorage', JSON.stringify(likedStorage));
+        renderCards(cardContainer, allCards);
+    })
     return cardCopy
+
 } 
 
 
@@ -88,8 +70,8 @@ async function getAllElement () {
         await fetch(`https://api.escuelajs.co/api/v1/products`, {
             method: 'GET',
         }).then((response)=> response.json()).then((data) => {
-            console.log(data);
-            return renderCards(cardContainer, data)
+            allCards = data;
+            renderCards(cardContainer, data)
         }).finally(() => {
             ladingOverlay.style.display = 'none';
         })
@@ -98,18 +80,7 @@ async function getAllElement () {
     }
 }
 
-function getLikedCardsFromLocalStorage() {
-    const likedCards = [];
-    for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (localStorage.getItem(key) === 'true') {
-            likedCards.push(key);
-        }
-    }
-    return likedCards;
-}
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log(localStorage)
     getAllElement();
 })
