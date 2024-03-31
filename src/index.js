@@ -25,7 +25,7 @@ function createCardElement (items) {
     cardCopy.querySelector('[data-card-category]').textContent = items.category.name;
     cardCopy.querySelector('[data-card-price-value]').textContent = '$'+ items.price;
     
-    likeImage.setAttribute('src', isLiked? '../img/like_image.png': '../img/unlike_image.png');
+    likeImage.setAttribute('src', isLiked? './src/img/like_image.png': './src/img/unlike_image.png');
 
     if (items.description.length > 30) {
         const button = document.createElement('button');
